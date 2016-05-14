@@ -559,15 +559,6 @@ string print_implicant_as_string(
 }
 
 
-/*
-void delete_vector_of_matrix_b(vector<matrix_b> &vec){
-    for(vector<matrix_b>::iterator i = vec.begin(); i != vec.end(); ++i){
-        delete_matrix(i->matr);
-    }
-}
-*/
-
-
 void write_to_file(const vector<int> &vec1,
   const vector<int> &vec2,
   char *chose,

@@ -14,24 +14,6 @@ matrix createMatrix(int numOfLines, int numOfColumns){
     return matr;
 }
 
-/*
-void delete_matrix(matrix &mat){
-    for(int i=0;i<mat.numOfRows;i++){
-            delete [] mat.array[i];
-    }
-    delete [] mat.array;
-    mat.array = nullptr;
-}
-
-
-void delete_vector_of_matrix(vector<matrix> &vector_of_matr){
-    vector<matrix>::iterator ite;
-    for(ite=vector_of_matr.begin();ite != vector_of_matr.end(); ++ite){
-        delete_matrix(*ite);
-    }
-}
-*/
-
 void showMatrix(const matrix &array){
     for(int i=0;i<array.numOfRows;i++){
         for(int j=0;j<array.numOfColumns;j++){
@@ -65,17 +47,6 @@ matrix make_bin_matrix_by_dec_vec(const vector<int> &vec, int max){
 
 }
 
-/*
-matrix copy_matrix(const matrix &mat){
-    matrix copied = createMatrix(mat.numOfRows, mat.numOfColumns);
-    for(int i = 0; i < copied.numOfRows; i++){
-        for(int j = 0; j < copied.numOfColumns; j++){
-            copied.array[i][j] = mat.array[i][j];
-        }
-    }
-    return copied;
-}
-*/
 
 string show_matrix_as_string(const matrix &array){
     string result;
