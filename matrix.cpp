@@ -42,22 +42,24 @@ void showMatrix(const matrix &array){
 }
 
 
-matrix make_bin_matrix_by_dec_vec(const vector<int> &vec, int max){
+matrix make_bin_matrix_by_dec_vec(const set<int> &vec, int max){
     vector<int> bin = toBinary(max);
     matrix matr = createMatrix(vec.size(),bin.size());
-    for(int k=0, dif = 0; k<matr.numOfRows;k++){
-        bin = toBinary(vec[k]);
+    set<int>::iterator ite = vec.begin();
+    int dif = 0, k = 0;
+    while(ite != vec.end()){
+        bin = toBinary(*ite++);
         dif = matr.numOfColumns-bin.size();
         int last = bin.size()-1;
         for(int i=0; i<matr.numOfColumns;i++){
             if(dif>0){
-                matr.array[k][i] =0;
-                dif--;
+                matr.array[k][i] = 0;
+                --dif;
             } else{
-                matr.array[k][i] = bin[last];
-                last--;
+                matr.array[k][i] = bin[last--];
             }
         }
+        ++k;
     }
     return matr;
 

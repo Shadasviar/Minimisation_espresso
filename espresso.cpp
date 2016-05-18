@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <set>
 #define DO_NOTHING
 #define IN
 #define OUT
@@ -31,12 +32,12 @@ using namespace std;
 
 enum matrix_type{F, R, Z, D};
 
-vector<int> make_by_other(
-        const vector<int> &vec1,
-        const vector<int> &vec2);
+set<int> make_by_other(
+        const set<int> &vec1,
+        const set<int> &vec2);
 
-vector<int> make_by_other(
-        const vector<int> &vec1);
+set<int> make_by_other(
+        const set<int> &vec1);
 
 struct vector_with_indikator;
 
@@ -105,35 +106,26 @@ void delete_vector_of_matrix_b(vector<matrix_b> &);
  * ----------------------------------------------------------------------------------------------------*/
 
 
-vector<int> make_by_other(
-  const vector<int> &vec1,
-  const vector<int> &vec2)
+set<int> make_by_other(
+  const set<int> &vec1,
+  const set<int> &vec2)
 {
-  vector<int> result;
-  result.push_back(*max_element(vec1.begin(),vec1.end()));
-  result.push_back(*max_element(vec2.begin(),vec2.end()));
+  set<int> result;
+  result.insert(vec1.begin(), vec1.end());
+  result.insert(vec2.begin(), vec2.end());
 
-  int max = *max_element(result.begin(),result.end());
-  result.clear();
-
-  for(int i=0; i < max; i++){
-    if(find(vec1.begin(),vec1.end(),i) == vec1.end() && find(vec2.begin(),vec2.end(),i) == vec2.end()){
-      result.push_back(i);
-    }
-  }
-
-  return result;
+  return make_by_other(result);
 }
 
 
-vector<int> make_by_other(const vector<int> &vec1)
+set<int> make_by_other(const set<int> &vec1)
 {
-  vector<int> result;
-  int max = *max_element(vec1.begin(),vec1.end());
+  set<int> result;
+  int max = *vec1.rbegin();
 
   for(int i=0; i<max; i++){
-    if(find(vec1.begin(),vec1.end(),i) == vec1.end()){
-      result.push_back(i);
+    if(vec1.count(i) == 0){
+      result.insert(i);
     }
   }
   return result;
@@ -141,7 +133,7 @@ vector<int> make_by_other(const vector<int> &vec1)
 
 
 struct vector_with_indikator{
-  vector<int> vec;
+  set<int> vec;
   matrix_type indikator; //F- ones R-zeros other- don't carry
 };
 
@@ -152,8 +144,8 @@ bool vectors_have_collision(
 {
 
   bool have_collision = false;
-  for(vector<int>::iterator ite = vec1.vec.begin(); ite != vec1.vec.end(); ++ite){
-    if(find(vec2.vec.begin(), vec2.vec.end(), *ite) != vec2.vec.end()){
+  for(set<int>::iterator ite = vec1.vec.begin(); ite != vec1.vec.end(); ++ite){
+    if(vec2.vec.count(*ite) != 0){
       have_collision = true;
       break;
     }
@@ -578,8 +570,8 @@ string print_implicant_as_string(
 }
 
 
-void write_to_file(const vector<int> &vec1,
-  const vector<int> &vec2,
+void write_to_file(const set<int> &vec1,
+  const set<int> &vec2,
   char *chose,
   const char *filename)
 {  
@@ -597,18 +589,18 @@ void write_to_file(const vector<int> &vec1,
 
 
 void show_finally_functions(
-  const vector<int> &vec1,
-  const vector<int> &vec2,
+  const set<int> &vec1,
+  const set<int> &vec2,
   char *chose)
 {
   cout<<get_finally_functions_as_str(vec1, vec2, chose);
 }
 
-string get_finally_functions_as_str(const vector<int> &vec1, const vector<int> &vec2, char *chose){
+string get_finally_functions_as_str(const set<int> &vec1, const set<int> &vec2, char *chose){
 
     vector<vector_with_indikator> vec;
     vector_with_indikator vin;
-    vector<int> tmp[2];
+    set<int> tmp[2];
     string result;
 
     tmp[0] = vec1;

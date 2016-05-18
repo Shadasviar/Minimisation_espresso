@@ -22,15 +22,16 @@
 #ifndef ESPRESSO
 #define ESPRESSO
 
-void show_finally_functions(const vector<int> &vec1,
-  const vector<int> &vec2,
+void show_finally_functions(
+  const set<int> &vec1,
+  const set<int> &vec2,
   char *chose
 );
 
 
 void write_to_file(
-  const vector<int> &vec1,
-  const vector<int> &vec2,
+  const set<int> &vec1,
+  const set<int> &vec2,
   char *chose,
   const char *filename
 );
@@ -42,8 +43,9 @@ void write_to_file(
 );
 
 
-string get_finally_functions_as_str(const vector<int> &vec1,
-  const vector<int> &vec2,
+string get_finally_functions_as_str(
+  const set<int> &vec1,
+  const set<int> &vec2,
   char *chose
 );
 

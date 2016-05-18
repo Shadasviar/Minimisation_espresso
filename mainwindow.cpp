@@ -57,8 +57,8 @@ void MainWindow::on_make_button_clicked()
         QString ones = ui->ones_line_edit->text()+',',
                 zeros = ui->zeros_line_edit->text()+',';
 
-        vector<int> ones_vec = get_vector_from_string(ones);
-        vector<int> zeros_vec = get_vector_from_string(zeros);
+        set<int> ones_vec = get_vector_from_string(ones);
+        set<int> zeros_vec = get_vector_from_string(zeros);
 
         clock_t start, stop;
         start = clock();
@@ -79,11 +79,11 @@ void MainWindow::on_make_button_clicked()
 
 }
 
-vector<int> MainWindow::get_vector_from_string(QString in_str){
+set<int> MainWindow::get_vector_from_string(QString in_str){
     QString number;
     int num = 0;
 
-    vector<int> result;
+    set<int> result;
     for(QString::iterator ite= in_str.begin(); ite!= in_str.end(); ++ite){
         if(*ite != ','){
             number.append(*ite);
@@ -91,7 +91,7 @@ vector<int> MainWindow::get_vector_from_string(QString in_str){
         }else{
             num=number.toInt();
             number.clear();
-            result.push_back(num);
+            result.insert(num);
         }
     }
     return result;

@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <QBitArray>
+#include <set>
 #ifndef MATRIX
 #define MATRIX
 #define OUT
@@ -36,7 +37,7 @@ struct matrix{
 matrix createMatrix(int numOfLines, int numOfColumns);
 void showMatrix(const matrix &array);
 string show_matrix_as_string(const matrix &array);
-matrix make_bin_matrix_by_dec_vec(const vector<int> &vec, int max);
+matrix make_bin_matrix_by_dec_vec(const set<int> &vec, int max);
 
 #endif //MATRIX
 

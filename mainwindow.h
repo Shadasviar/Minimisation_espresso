@@ -21,7 +21,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <vector>
+#include <set>
 
 namespace Ui {
 class MainWindow;
@@ -43,7 +43,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    std::vector<int> get_vector_from_string(QString in_str);
+    std::set<int> get_vector_from_string(QString in_str);
     bool checked_options(char choose[2]);
 };
 
