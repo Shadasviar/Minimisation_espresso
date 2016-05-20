@@ -575,16 +575,10 @@ void write_to_file(const set<int> &vec1,
   char *chose,
   const char *filename)
 {  
- 
-   FILE *file;
-   if ((file = fopen (filename,"w")) == NULL)
-   {
-       cout << "Error of creating of file" << endl;
-       exit(1);
-   }
-
-  fputs(get_finally_functions_as_str(vec1, vec2, chose).c_str(), file);
-  fclose(file);
+    ofstream ofile;
+    ofile.open(filename);
+    ofile << get_finally_functions_as_str(vec1, vec2, chose);
+    ofile.close();
 }
 
 
