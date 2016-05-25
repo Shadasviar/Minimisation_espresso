@@ -22,7 +22,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
 #include <set>
 #define DO_NOTHING
 #define IN
@@ -267,7 +266,6 @@ vector<matrix> get_matrix_b(
     matrix tmp = B;
     vector_of_b.push_back(tmp);
   }
-  //delete_matrix(B);
   return vector_of_b;
 }
 
