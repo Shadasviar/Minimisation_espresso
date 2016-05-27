@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+
 #define DO_NOTHING
 #define IN
 #define OUT
@@ -100,6 +101,7 @@ vector<string> get_finally_functions(const vector<matrix> &fr,
 
 void delete_vector_of_matrix_b(vector<matrix_b> &);
 
+
 /*
  * End of prototypes
  * ----------------------------------------------------------------------------------------------------*/
@@ -133,7 +135,9 @@ set<int> make_by_other(const set<int> &vec1)
 
 struct vector_with_indikator{
   set<int> vec;
-  matrix_type indikator; //F- ones R-zeros other- don't carry
+  
+  //F- ones R-zeros other- don't carry
+  matrix_type indikator; 
 };
 
 
