@@ -23,6 +23,9 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <thread>
+#include <mutex>
+#include <QDebug>
 
 #define DO_NOTHING
 #define IN
@@ -77,12 +80,15 @@ bool cmp_for_same_vec_of_impl(
         vec_of_impl A,
         vec_of_impl B);
 
+/*
 vector<vec_of_impl> get_vector_of_implicants(
-        IN const vector<matrix> &fr,
-        OUT vector<matrix_b> &mat_b);
-
-vector<matrix_b> get_matrixes_b(
         IN const vector<matrix> &fr);
+
+vector<matrix_b> get_matrices_b(
+        IN const vector<matrix> &fr);
+*/
+
+vector<vec_of_impl> get_vector_of_implicants(const vector<matrix> &fr, vector<matrix_b> &mat_b);
 
 bool current_b_has_this_implicant(
         const vector<vec_of_impl> &vector_of_implicants,
@@ -427,30 +433,128 @@ bool cmp_for_same_vec_of_impl(
   return A.vec==B.vec;
 }
 
+/*
+vector<matrix_b> get_matrices_b(
+        IN const vector<matrix> &fr)
+{
+
+    vector<matrix_b> mat_b;
+    vector<matrix> B_sigma = get_matrix_b(fr);
+
+    mutex mat_b_mutex;
+    vector<thread> threads;
+
+    for(int i = 0; i < fr[0].numOfRows; i++){
+        threads.push_back(thread([&,i, B_sigma]{
+
+          thread_local vector<vector<int> > bufer;
+          thread_local matrix_b m_b;
+
+          bufer = get_ones_positions_from_matrix(B_sigma.at(i));
+          bufer = open_brackets(bufer);
+          m_b.matr = B_sigma.at(i);
+
+          for(size_t j = 0; j < bufer.size(); j++){
+            m_b.implicants.push_back(bufer.at(j));
+          }
+
+          mat_b_mutex.lock();
+          mat_b.push_back(m_b);
+          mat_b_mutex.unlock();
+
+          m_b.implicants.clear();
+
+        }
+      ));
+    }
+
+    for_each (threads.begin(), threads.end(), [](thread &t){t.join();});
+    return mat_b;
+}
+
+
+vector<vec_of_impl> get_vector_of_implicants(
+  IN const vector<matrix> &fr)
+{
+  vector<vec_of_impl> result;
+  vector<vector<int> > bufer;
+  vec_of_impl vec_buf;
+  vector<matrix> B_sigma = get_matrix_b(fr);
+  mutex vim_mutex;
+
+  for(int i = 0; i < fr[0].numOfRows; i++){
+    bufer = get_ones_positions_from_matrix(B_sigma.at(i));
+    bufer = open_brackets(bufer);
+    for(size_t j = 0; j < bufer.size(); j++){
+      vec_buf.vec = bufer.at(j);
+      vec_buf.num_of_line_from_F = i;
+
+      vim_mutex.lock();
+      result.push_back(vec_buf);
+      vim_mutex.unlock();
+    }
+
+  }
+
+  sort(result.begin(),result.end(),cmp_vec_of_impl);
+  result.resize(distance(result.begin(),unique(result.begin(),result.end(),cmp_for_same_vec_of_impl)));
+
+  return result;
+}
+
+*/
+
+
 
 vector<vec_of_impl> get_vector_of_implicants(
   IN const vector<matrix> &fr,
   OUT vector<matrix_b> &mat_b)
 {
   vector<vec_of_impl> result;
-  vector<vector<int> > bufer;
-  vec_of_impl vec_buf;
-  vector<matrix> B_sigma = get_matrix_b(fr);
-  matrix_b m_b;
+  const vector<matrix> B_sigma = get_matrix_b(fr);
+
+  mutex mut;
+  vector<thread> threads;
 
   for(int i = 0; i < fr[0].numOfRows; i++){
-    bufer = get_ones_positions_from_matrix(B_sigma.at(i));
-    bufer = open_brackets(bufer);
-    m_b.matr = B_sigma.at(i);
-    for(size_t j = 0; j < bufer.size(); j++){
-      vec_buf.vec = bufer.at(j);
-      vec_buf.num_of_line_from_F = i;
-      result.push_back(vec_buf);
-      m_b.implicants.push_back(bufer.at(j));
+      try{
+          threads.push_back(thread([&,i]{
+
+            //mut.lock();
+            thread_local vector<vector<int> > bufer = get_ones_positions_from_matrix(B_sigma.at(i));
+            //mut.unlock();
+            bufer = open_brackets(bufer);
+
+            thread_local matrix_b m_b;
+            m_b.matr = B_sigma.at(i);
+
+            thread_local vec_of_impl vec_buf;
+            for(size_t j = 0; j < bufer.size(); j++){
+              vec_buf.vec = bufer.at(j);
+              vec_buf.num_of_line_from_F = i;
+
+              mut.lock();
+              result.push_back(vec_buf);
+              mut.unlock();
+
+              m_b.implicants.push_back(bufer.at(j));
+            }
+
+            mut.lock();
+            mat_b.push_back(m_b);
+            mut.unlock();
+
+            m_b.implicants.clear();
+
+          }));
+    }catch(const std::system_error &ex){
+        for_each(threads.begin(), threads.end(), [](thread &t){t.join();});
+        threads.clear();
+        --i;
     }
-    mat_b.push_back(m_b);
-    m_b.implicants.clear();
   }
+
+  for_each (threads.begin(), threads.end(), [](thread &t){t.join();});
 
   sort(result.begin(),result.end(),cmp_vec_of_impl);
   result.resize(distance(result.begin(),unique(result.begin(),result.end(),cmp_for_same_vec_of_impl)));
@@ -492,6 +596,7 @@ matrix get_result_matrix(
 }
 
 
+/*O(vec.size * vec[v].size * N)*/
 vector<string> get_finally_functions(
   const vector<matrix> &fr,
   const matrix &result_matr,
@@ -500,31 +605,48 @@ vector<string> get_finally_functions(
 
   vector<vector<int> > vec=get_ones_positions_from_matrix(result_matr);
   vec=open_brackets(vec);
-  string min_func;
+  //string min_func;
   vector<string> result;
 
+  mutex mut;
+  vector<thread> threads;
+
   for(size_t v=0; v<vec.size();v++){
-    for(size_t i=0; i<vec[v].size();i++){
-      for(int j=0;j<fr[0].numOfRows;j++){
-        if(j==vector_of_implicants[vec[v][i]].num_of_line_from_F){
-          for(size_t k=0;k<vector_of_implicants[vec[v][i]].vec.size();k++){
-            if(fr[0].array[vector_of_implicants[vec[v][i]].num_of_line_from_F][vector_of_implicants[vec[v][i]].vec[k]]==1){
-              min_func.append("X");
-              min_func.append(std::to_string(vector_of_implicants[vec[v][i]].vec[k]));
+      try{
+          threads.push_back(thread([&, v]{
+            thread_local string min_func;
+
+            for(size_t i=0; i<vec[v].size();i++){
+              for(int j=0;j<fr[0].numOfRows;j++){
+
+                if(j==vector_of_implicants[vec[v][i]].num_of_line_from_F){
+                  for(size_t k=0;k<vector_of_implicants[vec[v][i]].vec.size();k++){
+                    if(fr[0].array[vector_of_implicants[vec[v][i]].num_of_line_from_F][vector_of_implicants[vec[v][i]].vec[k]]==1){
+                      min_func.append("X");
+                      min_func.append(std::to_string(vector_of_implicants[vec[v][i]].vec[k]));
+                    }
+                    else{
+                      min_func.append("!X");
+                      min_func.append(std::to_string(vector_of_implicants[vec[v][i]].vec[k]));
+                    }
+                  }
+                }
+              }
+              min_func.append("+");
             }
-            else{
-              min_func.append("!X");
-              min_func.append(std::to_string(vector_of_implicants[vec[v][i]].vec[k]));
-            }
-          }
-        }
+            min_func.resize(min_func.size()-1);
+            mut.lock();
+            result.push_back(min_func);
+            mut.unlock();
+            min_func.clear();
+        }));
+      }catch(std::system_error ex){
+          for(thread &th : threads) th.join();
+          --v;
       }
-      min_func.append("+");
-    }
-    min_func.resize(min_func.size()-1);
-    result.push_back(min_func);
-    min_func.clear();
   }
+
+  for(thread &th : threads) th.join();
 
   return result;
 }
@@ -597,7 +719,7 @@ string get_finally_functions_as_str(const set<int> &vec1, const set<int> &vec2, 
     vector<vector_with_indikator> vec;
     vector_with_indikator vin;
     set<int> tmp[2];
-    string result;
+    //string result;
 
     tmp[0] = vec1;
     tmp[1] = vec2;
@@ -626,7 +748,7 @@ string get_finally_functions_as_str(const set<int> &vec1, const set<int> &vec2, 
     }
 
     vector<matrix> mat = get_f_and_r(vec[0],vec[1]);
-    result.append("\nMatrix of ones: \n\n");
+    string result("\nMatrix of ones: \n\n");
     result.append(show_matrix_as_string(mat[0]).c_str());
     result.append("\nMatrix of zeros: \n\n");
     result.append(show_matrix_as_string(mat[1]).c_str());
@@ -634,19 +756,39 @@ string get_finally_functions_as_str(const set<int> &vec1, const set<int> &vec2, 
 
     vector<vec_of_impl> vim;
     vector<matrix_b> mat_b;
-    vim=get_vector_of_implicants(mat,mat_b);
+    //vim = get_vector_of_implicants(mat);
+    //mat_b = get_matrices_b(mat);
+    vim = get_vector_of_implicants(mat, mat_b);
     result.append("Block matrixes:");
+
+    mutex mut;
+    vector<thread> threads;
     for(size_t i = 0; i < mat_b.size(); i++){
-      result.append("\nB");
-      result.append(to_string(i).c_str());
-      result.append("\n\n");
-      result.append(show_matrix_as_string(mat_b[i].matr).c_str());
-      result.append("\nimplicants:\n\n");
-      for(size_t j = 0; j < mat_b[i].implicants.size(); j++){
-        result.append(print_implicant_as_string(mat_b, i, j, mat).c_str());
-        result.append("\n\n");
-      }
+        try{
+            threads.push_back(thread([&, i]{
+              thread_local string substr;
+              substr.append("\nB");
+              substr.append(to_string(i).c_str());
+              substr.append("\n\n");
+              substr.append(show_matrix_as_string(mat_b[i].matr).c_str());
+              substr.append("\nimplicants:\n\n");
+              for(size_t j = 0; j < mat_b[i].implicants.size(); j++){
+                substr.append(print_implicant_as_string(mat_b, i, j, mat).c_str());
+                substr.append("\n\n");
+              }
+              mut.lock();
+              result.append(substr);
+              mut.unlock();
+              substr.clear();
+            }));
+        }catch(std::system_error ex){
+            for(thread &thr: threads) thr.join();
+            threads.clear();
+            --i;
+        }
     }
+
+    for(thread &thr: threads) thr.join();
 
     res = get_result_matrix(vim,mat,mat_b);
     result.append("FUNCTIONS are:\n");
