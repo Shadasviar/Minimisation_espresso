@@ -25,6 +25,7 @@
 #include <vector>
 #include "filename_enter.h"
 #include <ctime>
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
