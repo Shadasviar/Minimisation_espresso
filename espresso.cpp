@@ -23,6 +23,9 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <thread>
+#include <mutex>
+#include <list>
 
 #define DO_NOTHING
 #define IN
@@ -433,24 +436,42 @@ vector<vec_of_impl> get_vector_of_implicants(
   OUT vector<matrix_b> &mat_b)
 {
   vector<vec_of_impl> result;
-  vector<vector<int> > bufer;
-  vec_of_impl vec_buf;
-  vector<matrix> B_sigma = get_matrix_b(fr);
-  matrix_b m_b;
+  const vector<matrix> B_sigma = get_matrix_b(fr);
 
-  for(int i = 0; i < fr[0].numOfRows; i++){
-    bufer = get_ones_positions_from_matrix(B_sigma.at(i));
-    bufer = open_brackets(bufer);
-    m_b.matr = B_sigma.at(i);
-    for(size_t j = 0; j < bufer.size(); j++){
-      vec_buf.vec = bufer.at(j);
-      vec_buf.num_of_line_from_F = i;
-      result.push_back(vec_buf);
-      m_b.implicants.push_back(bufer.at(j));
-    }
-    mat_b.push_back(m_b);
-    m_b.implicants.clear();
+  size_t n_threads = thread::hardware_concurrency();
+  size_t n_iterations = (fr[0].numOfRows / n_threads) + 1;
+  list<thread> threads;
+  mutex mut;
+
+  for(size_t i_th = 0; i_th < n_threads; ++i_th){
+      threads.push_back(thread([&, i_th]{
+          thread_local vector<vector<int> > bufer;
+          thread_local vec_of_impl vec_buf;
+          thread_local matrix_b m_b;
+          for(size_t i = i_th * n_iterations; i < (size_t)fr[0].numOfRows && i < (i_th+1) * n_iterations; ++i){
+            bufer = get_ones_positions_from_matrix(B_sigma.at(i));
+            bufer = open_brackets(bufer);
+            m_b.matr = B_sigma.at(i);
+            for(size_t j = 0; j < bufer.size(); j++){
+              vec_buf.vec = bufer.at(j);
+              vec_buf.num_of_line_from_F = i;
+
+              mut.lock();
+              result.push_back(vec_buf);
+              mut.unlock();
+
+              m_b.implicants.push_back(bufer.at(j));
+            }
+
+            mut.lock();
+            mat_b.push_back(m_b);
+            mut.unlock();
+
+            m_b.implicants.clear();
+          }
+      }));
   }
+  for(thread &th: threads) th.join();
 
   sort(result.begin(),result.end(),cmp_vec_of_impl);
   result.resize(distance(result.begin(),unique(result.begin(),result.end(),cmp_for_same_vec_of_impl)));
